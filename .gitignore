@@ -127,3 +127,13 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+Data/Variances/Variances_Electricity Generation.nc
+Data/Variances/Variances_Emissions.nc
+Data/Variances/Variances_Hydrogen.nc
+Data/Variances/Variances_Primary Energy.nc
+Data/Variances/Variances_Secondary Energy Liquids.nc
+Data/Variances/Variances_Sector Industry.nc
+Data/Variances/Variances_Sector Residential.nc
+Data/Variances/Variances_Sector Transportation.nc
+Data/XRdata.nc
+Data/XRmeta.nc
