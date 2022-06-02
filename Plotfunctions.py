@@ -7,12 +7,58 @@ import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import pandas as pd
+from plotly.colors import n_colors
+import plotly.express as px
 
 def rescale_size(s, max):
     s /= max
     s = s ** 0.3
     s *= 25
     return s
+
+def tableplot(XR, t, srt):
+        tot = np.array(XR.sel(Time=2050).mean(dim='Member').S_c)+np.array(XR.sel(Time=2050).mean(dim='Member').S_z)+np.array(XR.sel(Time=2050).mean(dim='Member').S_m)
+        ar = np.array([np.array(XR.Variable),
+        np.array(XR.sel(Time=t).mean(dim='Member').S_m/tot).round(2),
+        np.array(XR.sel(Time=t).mean(dim='Member').S_c/tot).round(2),
+        np.array(XR.sel(Time=t).mean(dim='Member').S_z/tot).round(2)])
+
+        colors = n_colors('rgb(255, 200, 200)', 'rgb(200, 0, 0)', 100, colortype='rgb')
+        bar = px.colors.diverging.RdBu_r
+        colors = []
+        for i in range(len(bar)-1):
+                colors = colors+n_colors(px.colors.diverging.RdBu_r[i], px.colors.diverging.RdBu_r[i+1], int(100/len(bar)), colortype='rgb')
+        colors = colors+n_colors(px.colors.diverging.RdBu_r[i+1], px.colors.diverging.RdBu_r[i+1], int(100/len(bar)), colortype='rgb')
+        ar100 = (ar[1:]*100).astype(int)
+        fig = go.Figure(data=[go.Table(
+        columnwidth = [70,40, 40, 40],
+        header = dict(
+                values = [['<b>Variable</b><br>in '+str(t)],
+                        ['Model'],
+                        ['Climate category'],
+                        ['Scenario']],
+
+                line_color='darkslategray',
+                fill_color='black',
+                align=['center','center','center','center'],
+                font=dict(color='white', size=12),
+                height=40
+        ),
+        cells=dict(
+                values=ar[:, ar[srt].argsort()[::-1]],
+                line_color='black',
+                align=['left','center','center','center'],
+                fill_color=['white',
+                        np.array(colors)[ar100[:, ar[srt].argsort()[::-1]][0]],
+                        np.array(colors)[ar100[:, ar[srt].argsort()[::-1]][1]],
+                        np.array(colors)[ar100[:, ar[srt].argsort()[::-1]][2]]],
+                font_size=12,
+                font={'family' :["Arial", "Arial Black", "Arial Black", "Arial Black"],
+                'color': 'black'},
+                height=30)
+                )
+        ])
+        fig.update_layout(height=2000, width=1400)
 
 def triangleplot(XR):
     DF_counts = pd.read_csv("X:/user/dekkerm/Projects/AR6_Variance/variancedecomposition/Data/Counts.csv", index_col=0)

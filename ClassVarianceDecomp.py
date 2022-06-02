@@ -181,8 +181,8 @@ class variancedecomp(object):
                                 '2087', '2088', '2089', '2090', '2091', '2092', '2093', '2094', '2095',
                                 '2096', '2097', '2098', '2099', '2100']]
 
-            add_prim = 1
-            if add_prim == 1:
+            add_combs = 1
+            if add_combs == 1:
                 # ================================================================================ #
                 print("     Add Primary Energy|Wind+Solar") # This should be optimized at some point
                 # ================================================================================ #
@@ -196,6 +196,31 @@ class variancedecomp(object):
                     d['Variable'] = ['Primary Energy|Wind+Solar']
                     df1 = self.DF[(self.modscen == s) & (self.vars == 'Primary Energy|Wind')]
                     df2 = self.DF[(self.modscen == s) & (self.vars == 'Primary Energy|Solar')]
+                    for t in np.arange(2010, 2101):
+                        d[str(t)] = [list(df1[str(t)])[0] + list(df2[str(t)])[0]]
+                    if a == 0:
+                        DS = pd.DataFrame(d)
+                    else:
+                        DS = DS.append(pd.DataFrame(d), ignore_index=True)
+                    a += 1
+                self.DF = self.DF.append(DS)
+                self.DF = self.DF.reset_index()
+                self.DF = self.DF[self.DF.keys()[1:]]
+
+                # ================================================================================ #
+                print("     Add Secondary Energy|Electricity|Wind+Solar") # This should be optimized at some point
+                # ================================================================================ #
+
+                ms1 = np.unique(self.modscen[self.vars == 'Secondary Energy|Electricity|Wind'])
+                ms2 = np.unique(self.modscen[self.vars == 'Secondary Energy|Electricity|Solar'])
+                ms = np.unique(np.intersect1d(ms1, ms2))
+                a = 0
+                for s in ms:
+                    d = {}
+                    d['ModelScenario'] = [s]
+                    d['Variable'] = ['Secondary Energy|Electricity|Wind+Solar']
+                    df1 = self.DF[(self.modscen == s) & (self.vars == 'Secondary Energy|Electricity|Wind')]
+                    df2 = self.DF[(self.modscen == s) & (self.vars == 'Secondary Energy|Electricity|Solar')]
                     for t in np.arange(2010, 2101):
                         d[str(t)] = [list(df1[str(t)])[0] + list(df2[str(t)])[0]]
                     if a == 0:
@@ -283,6 +308,7 @@ class variancedecomp(object):
 
         def __init__(self, mainclass):
             years = list(mainclass.ar6.XR.Time.data)
+            self.XRsubs = {}
             self.variances = np.zeros(shape=(len(mainclass.vars.full), 5, mainclass.times_sampling, len(years)))
             for v_i in tqdm(range(len(mainclass.vars.full))):
                 var = mainclass.vars.full[v_i]
@@ -326,6 +352,7 @@ class variancedecomp(object):
             ccat = np.array(mainclass.meta.XR.sel(ModelScenario=xrsub.ModelScenario).Category.data)
             modscen = np.array(xrsub.ModelScenario)
             unimodscen = np.unique(modscen)
+            self.XRsubs[var] = xrsub
 
             # Save total variances
             var_totalraw = np.zeros(len(years))+np.nan

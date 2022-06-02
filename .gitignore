@@ -137,3 +137,7 @@ Data/Variances/Variances_Sector Residential.nc
 Data/Variances/Variances_Sector Transportation.nc
 Data/XRdata.nc
 Data/XRmeta.nc
+Data/Variances.nc
+Data/Backup/Variances.nc
+Data/Backup/XRdata.nc
+Data/Backup/XRmeta.nc
