@@ -4,9 +4,13 @@
 
 # Variables
 varfile: "Varlist.xlsx"
+save: "yes"
+
+# Computations
+variable_counting: "1"
+add_wind_solar: "1"
 
 # Technical parameters
-threshold_dataremoval: "5"
-sample_size: "250"             # Not necessarily equal or lower than threshold_dataremoval
-times_sampling: "25"
-combined_sample_size: "10"    # Not being used anymore?
+threshold_dataremoval: "10"
+sample_size_per_ms: "2000"
+resampling: "50"

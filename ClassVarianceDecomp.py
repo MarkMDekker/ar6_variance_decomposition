@@ -36,10 +36,14 @@ class variancedecomp(object):
         with open(self.current_dir / 'input.yml') as file:
             diction = yaml.load(file, Loader=yaml.FullLoader)
         self.varfile = diction['varfile']
+        self.save = diction['save']
         self.threshold_dataremoval = int(diction['threshold_dataremoval'])
-        self.sample_size = int(diction['sample_size'])
-        self.times_sampling = int(diction['times_sampling'])
-        self.combined_sample_size = int(diction['combined_sample_size'])
+        self.sample_size_per_ms = int(diction['sample_size_per_ms'])
+        # self.times_sampling = int(diction['times_sampling'])
+        # self.combined_sample_size = int(diction['combined_sample_size'])
+        self.variable_counting = int(diction['variable_counting'])
+        self.add_wind_solar = int(diction['add_wind_solar'])
+        self.resampling = int(diction['resampling'])
 
         # Run subclasses
         print('- Reading variable lists')
@@ -83,12 +87,19 @@ class variancedecomp(object):
     
     class class_meta(object):
         def __init__(self, mainclass):
-            self.path = mainclass.location_ipccdata / "ar6_full_metadata_indicators2021_10_14_v3.xlsx"
+            #self.path = mainclass.location_ipccdata / "ar6_full_metadata_indicators2021_10_14_v3.xlsx"
+            self.path = mainclass.location_ipccdata / "AR6_Scenarios_Database_metadata_indicators_v1.0.xlsx"
             DF = pd.read_excel(self.path, sheet_name='meta_Ch3vetted_withclimate')
-            DF = DF[DF.Vetting_historical == 'PASS']
+            idx = np.where((DF.Scenario == 'EN_NPi2020_800') & (DF.Model == 'WITCH 5.0'))[0]
+            DF = DF.drop(idx)
+            DF = DF.reset_index(drop=True)
+            idx = np.where((DF.Scenario == 'EN_NPi2020_900') & (DF.Model == 'WITCH 5.0'))[0]
+            DF = DF.drop(idx)
+            DF = DF.reset_index(drop=True)
+            DF = DF[DF.Vetting_historical == 'Pass']
             self.DF = DF.reset_index(drop=True)
-            self.model = np.array(DF.model)
-            self.scen = np.array(DF.scenario)
+            self.model = np.array(DF.Model)
+            self.scen = np.array(DF.Scenario)
             self.modscen = np.array([self.model[i]+'|'+self.scen[i] for i in range(len(DF))])
 
     # =========================================================== #
@@ -97,10 +108,10 @@ class variancedecomp(object):
     
     class class_ar6(object):
         def __init__(self, mainclass):
-            self.path = mainclass.location_ipccdata / "snapshot_world_with_key_climate_iamc_ar6_2021_10_14.csv"
+            #self.path = mainclass.location_ipccdata / "snapshot_world_with_key_climate_iamc_ar6_2021_10_14.csv"
+            self.path = mainclass.location_ipccdata / "AR6_Scenarios_Database_World_v1.0.csv"
 
-            counting = 1
-            if counting == 1:
+            if mainclass.variable_counting == 1:
                 # ================================================================================ #
                 print("     Saving counts of variables in total database (for reference later)")
                 # ================================================================================ #
@@ -123,7 +134,6 @@ class variancedecomp(object):
                                                 np.unique(modscen[Vars_raw == 'Primary Energy|Solar']))))
                 d['Count'] = count
                 self.countsdf = pd.DataFrame(d)
-                self.countsdf.to_csv(mainclass.current_dir / "Data" / "Counts.csv")
 
             # ================================================================================ #
             print("     Now actual reading of data, and applying various filters to the database")
@@ -166,7 +176,7 @@ class variancedecomp(object):
             mainclass.meta.DF['model'] = mainclass.meta.model
             self.DF['Model'] = self.model
             mainclass.meta.DF['ModelScenario'] = [mainclass.meta.model[i]+'|'+mainclass.meta.scen[i] for i in range(len(mainclass.meta.scen))]
-            mainclass.meta.DF = mainclass.meta.DF.drop(columns=['model', 'scenario'])
+            mainclass.meta.DF = mainclass.meta.DF.drop(columns=['Model', 'Scenario'])
             self.modscen = np.array([self.model[i]+'|'+self.scen[i] for i in range(len(self.scen))])
             self.DF['ModelScenario'] = self.modscen
             self.DF = self.DF[['ModelScenario', 'Variable', '2010', '2011', '2012', '2013', '2014',
@@ -181,8 +191,7 @@ class variancedecomp(object):
                                 '2087', '2088', '2089', '2090', '2091', '2092', '2093', '2094', '2095',
                                 '2096', '2097', '2098', '2099', '2100']]
 
-            add_combs = 1
-            if add_combs == 1:
+            if mainclass.add_wind_solar == 1:
                 # ================================================================================ #
                 print("     Add Primary Energy|Wind+Solar") # This should be optimized at some point
                 # ================================================================================ #
@@ -206,6 +215,8 @@ class variancedecomp(object):
                 self.DF = self.DF.append(DS)
                 self.DF = self.DF.reset_index()
                 self.DF = self.DF[self.DF.keys()[1:]]
+                self.vars = np.array(self.DF.Variable)
+                self.modscen = np.array(self.DF.ModelScenario)
 
                 # ================================================================================ #
                 print("     Add Secondary Energy|Electricity|Wind+Solar") # This should be optimized at some point
@@ -231,6 +242,10 @@ class variancedecomp(object):
                 self.DF = self.DF.append(DS)
                 self.DF = self.DF.reset_index()
                 self.DF = self.DF[self.DF.keys()[1:]]
+            self.model = np.array(DF.Model)
+            self.scen = np.array(DF.Scenario)
+            self.vars = np.array(DF.Variable)
+            self.modscen = np.array([self.model[i]+'|'+self.scen[i] for i in range(len(self.scen))])
 
             # ================================================================================ #
             print("     Convert time dimension and Xarray")
@@ -238,7 +253,6 @@ class variancedecomp(object):
 
             XRdummy = mainclass.meta.DF.set_index(['ModelScenario'])
             mainclass.meta.XR = xr.Dataset.from_dataframe(XRdummy)
-            mainclass.meta.XR.to_netcdf(mainclass.current_dir / "Data" / "XRmeta.nc")
 
             DF_timadj = self.DF.melt(id_vars=["ModelScenario", "Variable"], var_name="Time", value_name="Value")
             DF_timadj['Time'] = np.array(DF_timadj['Time']).astype(int)
@@ -251,7 +265,18 @@ class variancedecomp(object):
 
             self.XR = self.XR.sel(Variable=mainclass.vars.full)
             self.XR = self.XR.interpolate_na(dim="Time", method="linear")
-            self.XR.to_netcdf(mainclass.current_dir / "Data" / "XRdata.nc")
+
+            # ================================================================================ #
+            print("     Save stuff")
+            # ================================================================================ #
+
+            if mainclass.save == 'yes':
+                try:
+                    self.countsdf.to_csv(mainclass.current_dir / "Data" / "Counts.csv")
+                except:
+                    3
+                mainclass.meta.XR.to_netcdf(mainclass.current_dir / "Data" / "XRmeta.nc")
+                self.XR.to_netcdf(mainclass.current_dir / "Data" / "XRdata.nc")
     
     # =========================================================== #
     # Sublists for information (optional)
@@ -308,59 +333,153 @@ class variancedecomp(object):
 
         def __init__(self, mainclass):
             years = list(mainclass.ar6.XR.Time.data)
+            mainclass.years = years
             self.XRsubs = {}
-            self.variances = np.zeros(shape=(len(mainclass.vars.full), 5, mainclass.times_sampling, len(years)))
+            self.variances = np.zeros(shape=(len(mainclass.vars.full), 6, len(years)))
             for v_i in tqdm(range(len(mainclass.vars.full))):
                 var = mainclass.vars.full[v_i]
-                v1, v2, v3, v4, v5 = self.decompose_variable(var, mainclass)
-                self.variances[v_i][0] = v1
-                self.variances[v_i][1] = v2
-                self.variances[v_i][2] = v3
-                self.variances[v_i][3] = v4
-                self.variances[v_i][4] = v5
-             
-            ds = xr.Dataset({"Var_total": (("Variable", "Member", "Time"), self.variances[:, 0]),
-                            "S_m": (("Variable", "Member", "Time"), self.variances[:, 1]),
-                            "S_c": (("Variable", "Member", "Time"), self.variances[:, 2]),
-                            "S_z": (("Variable", "Member", "Time"), self.variances[:, 3]),
-                            "S_mc": (("Variable", "Member", "Time"), self.variances[:, 4])},
+                xrsub = self.preprocess_xr(var, mainclass)
+                vtot, s_m, s_c, s_mc, s_z, vtot_norm = self.generate_samples(var, mainclass, xrsub)
+                # for n_i in range(mainclass.times_sampling):
+                #     xrsample = xrsub.sel(ModelScenario = samples[n_i])
+                #     s_m, s_c, s_z, s_mc = self.decompose_variable(var, mainclass, xrsample)
+                self.variances[v_i][0] = vtot
+                self.variances[v_i][1] = s_m
+                self.variances[v_i][2] = s_c
+                self.variances[v_i][3] = s_z
+                self.variances[v_i][4] = s_mc
+                self.variances[v_i][5] = vtot_norm
+            
+            ds = xr.Dataset({"Var_total": (("Variable", "Time"), self.variances[:, 0]),
+                            "S_m": (("Variable",  "Time"), self.variances[:, 1]),
+                            "S_c": (("Variable", "Time"), self.variances[:, 2]),
+                            "S_z": (("Variable", "Time"), self.variances[:, 3]),
+                            "S_mc": (("Variable", "Time"), self.variances[:, 4]),
+                            "Var_total_norm": (("Variable", "Time"), self.variances[:, 5])},
                             coords={
                             "Variable": mainclass.vars.full,
-                            "Time": years,
-                            "Member": range(mainclass.times_sampling)})
+                            "Time": years})
             self.xr = ds
-            ds.to_netcdf(mainclass.current_dir / "Data" / "Variances.nc")
-
-        def decompose_variable(self, var, mainclass):
-            # Select data
+            if mainclass.save == 'yes':
+                ds.to_netcdf(mainclass.current_dir / "Data" / "Variances.nc")
+        
+        def preprocess_xr(self, var, mainclass):
+            ''' Checks in place '''
             xrsub = mainclass.ar6.XR.sel(Variable = var)
             xrsub = xrsub.dropna('ModelScenario', how='any')
             mods = np.array([xrsub.ModelScenario.data[i].split('|')[0] for i in range(len(xrsub.ModelScenario))])
             ccat = np.array(mainclass.meta.XR.sel(ModelScenario=xrsub.ModelScenario).Category.data)
             modscen = np.array(xrsub.ModelScenario)
-
-            # Filter small c-cat/models PER variable (to optimize amount of entries used)
             modscen_new = []
             for i in range(len(mods)):
                 m = mods[i]
                 c = ccat[i]
-                if len(np.where(mods == m)[0]) >= mainclass.threshold_dataremoval and len(np.where(ccat == c)[0]) >= mainclass.threshold_dataremoval:
+                if len(np.where(mods == m)[0]) >= mainclass.threshold_dataremoval and c != "C8":
                     modscen_new.append(modscen[i])
             xrsub = xrsub.sel(ModelScenario = modscen_new)
-            years = list(xrsub.Time.data)
-            mods = np.array([xrsub.ModelScenario.data[i].split('|')[0] for i in range(len(xrsub.ModelScenario))])
-            ccat = np.array(mainclass.meta.XR.sel(ModelScenario=xrsub.ModelScenario).Category.data)
-            modscen = np.array(xrsub.ModelScenario)
-            unimodscen = np.unique(modscen)
             self.XRsubs[var] = xrsub
+            # var_totalraw = np.zeros(len(mainclass.years))+np.nan
+            # for y_i, y in enumerate(mainclass.years):
+            #     seriesr = xrsub.sel(Time=y).Value
+            #     var_totalraw[y_i] = np.nanvar(seriesr/np.mean(seriesr))
+            return xrsub
+        
+        def generate_listoflists(self, var, mainclass, xrsub):
+            xrmeta = mainclass.meta.XR
+            values = np.array(xrsub.Value)
+            modscens = np.array(xrsub.ModelScenario)
+            mods = np.array([i.split('|')[0] for i in modscens])
+            ccat = np.array(xrmeta.sel(ModelScenario=xrsub.ModelScenario).Category.data)
+            unimods = np.unique(mods)
+            uniccat = np.unique(ccat)
 
-            # Save total variances
-            var_totalraw = np.zeros(len(years))+np.nan
-            for y_i, y in enumerate(years):
-                seriesr = xrsub.sel(Time=y).Value
-                series = seriesr - np.mean(seriesr)
-                series = series / np.std(seriesr)
-                var_totalraw[y_i] = np.nanvar(seriesr/np.mean(seriesr)) # Normalized for total var comparison
+            whs = []
+            for m_i, m in enumerate(unimods):
+                for c_i, c in enumerate(uniccat):
+                    wh = np.where((mods == m) & (ccat == c))[0]
+                    whs.append(wh)
+            return whs
+
+        def generate_samples(self, var, mainclass, xrsub):
+            xrmeta = mainclass.meta.XR
+            values = np.array(xrsub.Value)
+            values_nn = np.array(xrsub.Value)
+            values_nn = values_nn / np.mean(values_nn)
+            values = values - np.mean(values)
+            values = values / np.std(values)
+            mainclass.values = values
+            modscens = np.array(xrsub.ModelScenario)
+            mods = np.array([i.split('|')[0] for i in modscens])
+            scens = np.array([i.split('|')[1] for i in modscens])
+            ccat = np.array(xrmeta.sel(ModelScenario=xrsub.ModelScenario).Category.data)
+            unimods = np.unique(mods)
+            uniccat = np.unique(ccat)
+            uniscen = np.unique(scens)
+
+            # Generate samples
+            whs = self.generate_listoflists(var, mainclass, xrsub)
+            ss = mainclass.sample_size_per_ms
+
+            indices = np.zeros(shape=(6, mainclass.resampling, len(mainclass.years)))
+            for n_i in range(mainclass.resampling):
+                sample1 = np.zeros(shape=(2, len(whs)*ss)).astype(str)
+                a = 0
+                for m_i, m in enumerate(unimods):
+                    for c_i, c in enumerate(uniccat):
+                        wh = whs[a]
+                        sample1[0][a*ss:a*ss+ss] = [m]*ss
+                        sample1[1][a*ss:a*ss+ss] = [c]*ss
+                        a+=1
+                np.random.shuffle(sample1.T)
+
+                sample2 = np.zeros(shape=(2, len(whs)*ss)).astype(str)
+                a = 0
+                for m_i, m in enumerate(unimods):
+                    for c_i, c in enumerate(uniccat):
+                        wh = whs[a]
+                        sample2[0][a*ss:a*ss+ss] = [m]*ss
+                        sample2[1][a*ss:a*ss+ss] = [c]*ss
+                        a+=1
+                np.random.shuffle(sample2.T)
+
+                M1 = np.zeros(shape=(len(sample1[0]), len(mainclass.years)))
+                M1nn = np.zeros(shape=(len(sample1[0]), len(mainclass.years)))
+                M2 = np.zeros(shape=(len(sample1[0]), len(mainclass.years)))
+                Nm = np.zeros(shape=(len(sample1[0]), len(mainclass.years)))
+                Nc = np.zeros(shape=(len(sample1[0]), len(mainclass.years)))
+                Nmc = np.zeros(shape=(len(sample1[0]), len(mainclass.years)))
+                for m in unimods:
+                    for c in uniccat:
+                        wh = np.where((mods == m) & (ccat == c))[0]
+                        if len(wh) > 0:
+                            wh1 = np.where((sample1[0] == m) & (sample1[1] == c))[0]
+                            wh2 = np.where((sample2[0] == m) & (sample2[1] == c))[0]
+                            choice = np.random.choice(wh, mainclass.sample_size_per_ms, replace=True)
+                            M1nn[wh1] = values_nn[choice]
+                            M1[wh1] = values[choice]
+                            M2[wh2] = values[np.random.choice(wh, mainclass.sample_size_per_ms, replace=True)]
+
+                            wh_m = np.where((sample1[0] == m) & (sample2[1] == c))[0]
+                            wh_c = np.where((sample2[0] == m) & (sample1[1] == c))[0]
+                            Nm[wh_m] = values[np.random.choice(wh, len(wh_m), replace=True)]
+                            Nc[wh_c] = values[np.random.choice(wh, len(wh_c), replace=True)]
+
+                            Nmc[wh1] = values[np.random.choice(wh, len(wh1), replace=True)]
+
+                vtot = np.var(M1nn, axis=0)
+                vtot_norm = np.var(M1, axis=0)
+                s_m = np.diag(1/(len(sample1[0])-1)*np.dot(M1.T, Nm) - 1/(len(sample1[0]))*np.dot(M1.T, M2))/np.var(M1, axis=0)
+                s_c = np.diag(1/(len(sample1[0])-1)*np.dot(M1.T, Nc) - 1/(len(sample1[0]))*np.dot(M1.T, M2))/np.var(M1, axis=0)
+                comb = np.diag(1/(len(sample1[0])-1)*np.dot(M1.T, Nmc) - 1/len(sample1[0])*np.dot(M1.T, M2))/np.var(M1, axis=0)
+                s_mc = comb - s_m - s_c
+                s_z = 1 - comb
+                indices[:, n_i, :] = [vtot, s_m, s_c, s_mc, s_z, vtot_norm]
+
+            mainclass.comb = comb
+            
+            return np.mean(indices, axis=1)
+
+        def decompose_variable(self, var, mainclass, xrsample):
 
             # Helper functions
             def first_order(column, series):
@@ -386,30 +505,41 @@ class variancedecomp(object):
                 return np.var(means)
             
             # Start calculations
-            s_z = np.zeros(shape=(mainclass.times_sampling, len(years)))+np.nan
-            s_c = np.zeros(shape=(mainclass.times_sampling, len(years)))+np.nan
-            s_m = np.zeros(shape=(mainclass.times_sampling, len(years)))+np.nan
-            s_mc = np.zeros(shape=(mainclass.times_sampling, len(years)))+np.nan
+            s_z = np.zeros(shape=(len(mainclass.years)))+np.nan
+            s_c = np.zeros(shape=(len(mainclass.years)))+np.nan
+            s_m = np.zeros(shape=(len(mainclass.years)))+np.nan
+            s_mc = np.zeros(shape=(len(mainclass.years)))+np.nan
 
-            for n_i in range(mainclass.times_sampling):
+            # Sample rows
+            mods_sample = np.array([xrsample.ModelScenario.data[i].split('|')[0] for i in range(len(xrsample.ModelScenario))])
+            ccat_sample = np.array(mainclass.meta.XR.sel(ModelScenario=xrsample.ModelScenario).Category.data)
 
-                # Define sample
-                sample_i = np.random.choice(np.arange(len(modscen)), mainclass.sample_size, replace=False)
-                sample = modscen[np.array(sample_i)]
-                xrsample = xrsub.sel(ModelScenario = sample)
-                mods_sample = np.array([xrsample.ModelScenario.data[i].split('|')[0] for i in range(len(xrsample.ModelScenario))])
-                ccat_sample = np.array(mainclass.meta.XR.sel(ModelScenario=xrsample.ModelScenario).Category.data)
+            # Calculation of S_m, S_c, S_mc and S_z
+            for y_i, y in enumerate(mainclass.years):
+                seriesr = xrsample.sel(Time=y).Value
+                series = seriesr - np.mean(seriesr)
+                series = series / np.std(seriesr) # Var = 1 so no division needed anymore
+                s_m[y_i] = first_order(mods_sample, series)
+                s_c[y_i] = first_order(ccat_sample, series)
+                comb = combined_first_order(mods_sample, ccat_sample, series)
+                s_mc[y_i] = comb-s_m[y_i]-s_c[y_i]
+                s_z[y_i] = 1-comb
 
-                # Calculation of S_m, S_c, S_mc and S_z
-                for y_i, y in enumerate(years):
-                    seriesr = xrsample.sel(Time=y).Value
-                    series = seriesr - np.mean(seriesr)
-                    series = series / np.std(seriesr) # Var = 1 so no division needed anymore
-                    s_m[n_i, y_i] = first_order(mods_sample, series)
-                    s_c[n_i, y_i] = first_order(ccat_sample, series)
-                    comb = combined_first_order(mods_sample, ccat_sample, series)
-                    s_mc[n_i, y_i] = comb-s_m[n_i, y_i]-s_c[n_i, y_i]
-                    s_z[n_i, y_i] = 1-comb
+            # Return
+            return np.array([s_m, s_c, s_z, s_mc], dtype=object)
+
+# =========================================================== #
+# INITIALIZATION OF CLASS WHEN CALLED
+# =========================================================== #
+
+if __name__ == "__main__":
+
+    vardec = variancedecomp()
+    vardec.generate_modscencounts()
+
+# =========================================================== #
+# OLD CODE
+# =========================================================== #
 
             # for n_i in range(mainclass.times_sampling):
             #     # Decompose based on model
@@ -457,16 +587,3 @@ class variancedecomp(object):
             #         series = seriesr - np.mean(seriesr)
             #         series = series / np.std(seriesr)
             #         var_other[n_i, y_i] = 1-combined_first_order(mods_sample, ccat_sample, series)#/np.nanvar(series)
-
-            # Return
-            return np.array([var_totalraw, s_m, s_c, s_z, s_mc], dtype=object)
-            #return np.array([var_totalraw, var_model, var_ccat, var_other], dtype=object)
-
-# =========================================================== #
-# INITIALIZATION OF CLASS WHEN CALLED
-# =========================================================== #
-
-if __name__ == "__main__":
-
-    vardec = variancedecomp()
-    vardec.generate_modscencounts()
