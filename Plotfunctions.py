@@ -190,7 +190,11 @@ def spaghettiplot(XRraw, XRmeta, v1, v2):
 
         draw_line(fig, 'C1', 1.02, 0.1, 0.205, 'goldenrod', 1.04, 0.13)
         draw_line(fig, 'C6', 1.02, 0.245, 0.5, 'tomato', 1.04, 0.37)
+<<<<<<< HEAD
         draw_line(fig, 'C7-8', 1.02, 0.55, 0.91, 'darkred', 1.04, 0.75)
+=======
+        draw_line(fig, 'C8', 1.02, 0.55, 0.91, 'darkred', 1.04, 0.75)
+>>>>>>> 5c0e54aca78664d6bd1c9757282795ba99d164ef
 
         fig.update_xaxes(title="Year", row=1, col=1, range=(2011, 2100))
         fig.update_xaxes(title="Year", row=1, col=2, range=(2011, 2100))
@@ -234,7 +238,11 @@ def drawline_single(fig, x1, x2, y1, y2, color):
 # Function to create boxplot traces
 # ======================================== #
 
+<<<<<<< HEAD
 def boxplots(Var, colory, Year, XRdata, XRmeta, modelorcat, title, remc8):
+=======
+def boxplots(Var, colory, Year, XRdata, XRmeta, modelorcat, title):
+>>>>>>> 5c0e54aca78664d6bd1c9757282795ba99d164ef
 
     # Remove low level entries
     XR_filt = XRdata.sel(Variable=Var)
@@ -243,6 +251,7 @@ def boxplots(Var, colory, Year, XRdata, XRmeta, modelorcat, title, remc8):
     Models = np.array([XR_filt.ModelScenario.data[i].split('|')[0] for i in range(len(XR_filt.ModelScenario))])
     Ccat = np.array(XRmeta.sel(ModelScenario=XR_filt.ModelScenario).Category.data)
     modscen_new = []
+<<<<<<< HEAD
     if remc8 == "yes":
         for i in range(len(Models)):
                 m = Models[i]
@@ -255,6 +264,13 @@ def boxplots(Var, colory, Year, XRdata, XRmeta, modelorcat, title, remc8):
                 c = Ccat[i]
                 if len(np.where(Models == m)[0]) >= 10:
                         modscen_new.append(ModelScenarios[i])
+=======
+    for i in range(len(Models)):
+        m = Models[i]
+        c = Ccat[i]
+        if len(np.where(Models == m)[0]) >= 10 and c != "C8":
+                modscen_new.append(ModelScenarios[i])
+>>>>>>> 5c0e54aca78664d6bd1c9757282795ba99d164ef
     XR_filt = XR_filt.sel(ModelScenario = modscen_new)
 
     # Calculate percentages for box plots
@@ -305,7 +321,11 @@ def boxplots(Var, colory, Year, XRdata, XRmeta, modelorcat, title, remc8):
         ms = ModelScenarios[Models == unimodels[m2]]
         y = np.array(XR_filt.sel(Time=Year, ModelScenario=ms).Value)
         #tickvals=unimodels[np.argsort(Perc_models)], ticktext=['<br>-'.join(i.split(' ')[0].split('-')) for i in unimodels[np.argsort(Perc_models)]]
+<<<<<<< HEAD
         traces_m.append(go.Box(y=y, name=unimodels[m2][:3], fillcolor=col, line_color='black', marker=dict(color=col), boxpoints='all', jitter=0.5, pointpos=-1.8, whiskerwidth=0.2, marker_size=1.5, line_width=1, showlegend=False))#'<br>-'.join(unimodels[m2].split(' ')[0].split('-'))
+=======
+        traces_m.append(go.Box(y=y, name='<br>-'.join(unimodels[m2].split(' ')[0].split('-')), fillcolor=col, line_color='black', marker=dict(color=col), boxpoints='all', jitter=0.5, pointpos=-1.8, whiskerwidth=0.2, marker_size=1.5, line_width=1, showlegend=False))
+>>>>>>> 5c0e54aca78664d6bd1c9757282795ba99d164ef
     for m in range(len(unicats)):
         #rgb = mpl.colors.colorConverter.to_rgb(plt.cm.get_cmap('RdBu_r')(0.+m/len(unicats)))
         col = catcolors[m]#'rgb('+str(rgb[0])+','+str(rgb[1])+','+str(rgb[2])+')'

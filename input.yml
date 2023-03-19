@@ -6,6 +6,7 @@
 varfile: "Varlist.xlsx"
 save: "yes"
 
+<<<<<<< HEAD
 # Optional Modules
 variable_counting: "1"
 generate_composites: "yes"
@@ -15,3 +16,13 @@ threshold_dataremoval: "10"
 sample_size_per_ms: "3000"
 resampling: "100"
 removal_c8: "yes"
+=======
+# Computations
+variable_counting: "1"
+add_wind_solar: "1"
+
+# Technical parameters
+threshold_dataremoval: "10"
+sample_size_per_ms: "2000"
+resampling: "50"
+>>>>>>> 5c0e54aca78664d6bd1c9757282795ba99d164ef
