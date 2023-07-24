@@ -6,6 +6,9 @@
 varfile: "Varlist.xlsx"
 save: "yes"
 
+# Paths
+location_ipcc: "X:/user/dekkerm/Data/IPCC"
+
 # Optional Modules
 variable_counting: "1"
 generate_composites: "yes"

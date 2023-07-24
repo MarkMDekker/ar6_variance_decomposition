@@ -29,11 +29,11 @@ class variancedecomp(object):
         print("# ==================================== #")
 
         self.current_dir = Path.cwd()
-        self.location_ipccdata = Path("X:/user/dekkerm/Data/IPCC")
 
         # Read in Input YAML file
         with open(self.current_dir / 'input.yml') as file:
             diction = yaml.load(file, Loader=yaml.FullLoader)
+        self.location_ipccdata = Path(diction['location_ipcc'])
         self.varfile = diction['varfile']
         self.save = diction['save']
         self.threshold_dataremoval = int(diction['threshold_dataremoval'])
