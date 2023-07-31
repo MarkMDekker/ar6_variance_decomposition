@@ -3,12 +3,11 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# Own files
-Diagnostics.ipynb
-Figures/Old/
-
 # C extensions
 *.so
+
+# Ignore handling data files
+Data/Handling_files/XRdata.nc
 
 # Distribution / packaging
 .Python

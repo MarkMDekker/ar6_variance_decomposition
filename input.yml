@@ -7,14 +7,13 @@ varfile: "Varlist.xlsx"
 save: "yes"
 
 # Paths
-location_ipcc: "X:/user/dekkerm/Data/IPCC"
+location_ipcc: "../../../Data/IPCC"
 
 # Optional Modules
-variable_counting: "1"
 generate_composites: "yes"
 
 # Technical parameters
 threshold_dataremoval: "10"
-sample_size_per_ms: "3000"
-resampling: "100"
+sample_size_per_ms: "5"
+resampling: "5"
 removal_c8: "yes"
