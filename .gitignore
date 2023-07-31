@@ -8,6 +8,8 @@ __pycache__/
 
 # Ignore handling data files
 Data/Handling_files/XRdata.nc
+Figures/Paperfigures/Figure_1_*
+
 
 # Distribution / packaging
 .Python
