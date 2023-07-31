@@ -9,7 +9,7 @@ __pycache__/
 # Ignore handling data files
 Data/Handling_files/XRdata.nc
 Figures/Paperfigures/Figure_1_*
-
+Plotting_scripts/Plot_Triangles.ipynb
 
 # Distribution / packaging
 .Python
