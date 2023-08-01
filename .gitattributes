@@ -1,0 +1,2 @@
+Data/XRdata.nc filter=lfs diff=lfs merge=lfs -text
+Data/Handling_files/XRdata.nc filter=lfs diff=lfs merge=lfs -text
