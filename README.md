@@ -3,7 +3,7 @@
 This code involves a variance decomposition analysis of climate change mitigation scenarios, in order to understand the spread in these scenarios. The scenario spread of variables such as primary energy carriers, energy use in end-used sectors, emissions and more is attributed to three drivers: (1) climate targets, (2) model differences, and (3) other scenario assumptions.
 
 ### Requirements
-The code reads in the IPCC AR6 scenario database that is publicly available [here](https://zenodo.org/record/5886912) (version Nov 2022). Both the full data as well as the metadata are required. These files can be stored in any file directory, but make sure that this directory is specified in the `input.yml` file. Other required datafiles are already inside this Github repository. For the calculations, it only requires standard Python packages like `pandas`, `tqdm` and `yaml`. For plotting, slightly advanced packages such as `plotly` are used.
+The code reads in the IPCC AR6 scenario database that is publicly available [here](https://zenodo.org/record/5886912) (version Nov 2022). Both the full data as well as the metadata are required. These files can be stored in any file directory, but make sure that this directory is specified in the `input.yml` file. Other required datafiles are already inside this Github repository. For the calculations, it only requires standard Python packages like `pandas`, `tqdm` and `yaml`. For plotting, packages such as `plotly` are used.
 
 ### Usage
 ##### Setup
