@@ -1,4 +1,7 @@
 # Identifying the drivers of spread in climate change mitigation scenarios
+
+[![DOI](https://zenodo.org/badge/495435306.svg)](https://zenodo.org/badge/latestdoi/495435306)
+
 ### Introduction
 This code involves a variance decomposition analysis of climate change mitigation scenarios, in order to understand the spread in these scenarios. The scenario spread of variables such as primary energy carriers, energy use in end-used sectors, emissions and more is attributed to three drivers: (1) climate targets, (2) model differences, and (3) other scenario assumptions.
 
